@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Datalake Explorer</title>
+    <link rel="icon" href="logo_datalake2.png" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            font-size: 12px;
+        }
+        .details-table {
+            padding: 10px;
+            background-color: #f5f5f5;
+        }
+        #tableau {
+            display: none;
+        }
+
+        /* TOOLTIP bootstrap dans th */
+        th span[data-bs-toggle="tooltip"] {
+            cursor: help;
+            display: inline-block;
+            pointer-events: auto;
+        }
+        /* Curseur sur croix */
+        .badge-toggle {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 1px solid black;
+            border-radius: 2px;
+            background-color: white;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .badge-toggle:checked::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 5px;
+            width: 4px;
+            height: 8px;
+            border: solid black;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        .bg-orange-subtle {
+            background-color: #fff4e5 !important;
+        }
+
+        .border-orange-subtle {
+            border-color: #ffe0b2 !important;
+        }
+
+        .text-orange {
+            color: #fd7e14 !important;
+        }
+        div.dataTables_wrapper div.dataTables_length {
+            float: left;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        div.dataTables_wrapper div.dataTables_info {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin: 0 !important;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        #filterTranscript .form-switch {
+            padding-left: 2.5em; /* espace pour le switch */
+            font-size: 0.75rem;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 0; /* enlever l'espacement vertical */
+        }
+
+        #filterTranscript .form-check-input {
+            width: 1.6em;
+            height: 1em;
+            margin-top: 0;
+            margin-right: 0.5em;
+        }
+
+        #filterTranscript .form-check-label {
+            margin-bottom: 0;
+            font-weight: normal;
+        }
+        #filterBadges,
+        #filterTranscript {
+            min-height: 38px;
+        }
+
+        .transcript-switch-lg {
+            width: 3.2em !important;
+            height: 1.6em !important;
+        }
+        .hgmd-switch-lg {
+            width: 3.2em !important;
+            height: 1.6em !important;
+        }
+        #filterTranscript .mane-label {
+            font-size: 0.7rem;
+            margin-bottom: 0;
+        }
+        #filterHgmd .hgmd-label {
+            font-size: 0.7rem;
+            margin-bottom: 0;
+        }
+        .common-badge-style {
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 50rem;
+            padding: 0.25rem 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            user-select: none;
+            cursor: pointer;
+        }
+        .common-badge-style:not(.active) {
+            opacity: 0.5; /* Rendre les badges non actifs plus clairs */
+        }
+        .common-badge-style input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+        }
+
+        #filterTranscript > div.common-badge-style {
+            padding: 0.25rem 0.75rem;
+        }
+        #filterHgmd > div.common-badge-style {
+            padding: 0.25rem 0.75rem;
+        }
+        .mane-label {
+            user-select: none;
+        }
+        .hgmd-label {
+            user-select: none;
+        }
+        #filterTranscript > .common-badge-style {
+            display: flex !important;
+            align-items: center !important;
+            height: 1.8rem;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+        }
+        #filterHgmd > .common-badge-style {
+            display: flex !important;
+            align-items: center !important;
+            height: 1.8rem;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+        }
+        #filterTranscript .common-badge-style > .mane-label:first-child {
+            margin-right: -2rem; /* Réduit l’espace entre "MANE" et le switch */
+        }
+        #filterHgmd .common-badge-style > .hgmd-label:first-child {
+            margin-right: -2rem; 
+        }
+        /* Ajuster la taille du switch */
+        #filterTranscript .form-check-input.hgmd-switch-lg {
+            height: 1.2rem !important;
+            width: 2rem !important;
+            margin-top: 0 !important;
+        }
+        #filterHgmd .form-check-input.hgmd-switch-lg {
+            height: 1.2rem !important;
+            width: 2rem !important;
+            margin-top: 0 !important;
+        }
+        #filterTranscript .form-check-input.hgmd-switch-lg {
+            height: 1.2rem !important;
+            width: 2rem !important;
+            margin-top: 0 !important;
+        }
+        #filterHgmd .form-check-input.hgmd-switch-lg {
+            height: 1.2rem !important;
+            width: 2rem !important;
+            margin-top: 0 !important;
+        }
+        /* S’assurer que la div form-check ne se superpose pas */
+        #filterTranscript .form-check {
+            margin: 0;
+            padding: 0;
+            flex-shrink: 0; /* Ne pas rétrécir */
+            display: flex;
+            align-items: center;
+        }
+        #filterHgmd .form-check {
+            margin: 0;
+            padding: 0;
+            flex-shrink: 0; /* Ne pas rétrécir */
+            display: flex;
+            align-items: center;
+        }
+        #filterTranscript .form-check-input {
+            width: 2rem;
+            height: 1.2rem;
+            margin: 0;
+            cursor: pointer;
+        }
+        #filterHgmd .form-check-input {
+            width: 2rem;
+            height: 1.2rem;
+            margin: 0;
+            cursor: pointer;
+        }
+        #filterTranscript .hgmd-label + .form-check {
+            margin-left: 0.3rem;
+        }
+        #filterHgmd .hgmd-label + .form-check {
+            margin-left: 0.3rem;
+        }
+        #filterTranscript .form-check + .hgmd-label {
+            margin-left: 0.3rem;
+        }
+        #filterHgmd .form-check + .hgmd-label {
+            margin-left: 0.3rem;
+        }
+
+        /* Style pour le switch */
+        .form-switch {
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+            margin: 0;
+        }
+
+        /* Style pour le switch personnalisé */
+        .form-check-input.transcript-switch-lg {
+            width: 40px;
+            height: 20px;
+            opacity: 0;
+            position: absolute;
+        }
+        .form-check-input.hgmd-switch-lg {
+            width: 40px;
+            height: 20px;
+            opacity: 0;
+            position: absolute;
+        }
+        /* Style pour le curseur du switch */
+        .form-check-input.transcript-switch-lg + .form-check-label {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+            background-color: #ccc;
+            border-radius: 10px;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        .form-check-input.hgmd-switch-lg + .form-check-label {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+            background-color: #ccc;
+            border-radius: 10px;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+
+        /* Style pour le bouton du switch */
+        .form-check-input.transcript-switch-lg + .form-check-label::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background-color: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s;
+        }
+        .form-check-input.hgmd-switch-lg + .form-check-label::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background-color: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s;
+        }
+
+        /* Style pour le switch lorsqu'il est coché */
+        .form-check-input.transcript-switch-lg:checked + .form-check-label {
+            background-color: #28a745;
+        }
+        .form-check-input.hgmd-switch-lg:checked + .form-check-label {
+            background-color: #af1c1c;
+        }
+
+        /* Déplacer le bouton du switch lorsqu'il est coché */
+        .form-check-input.transcript-switch-lg:checked + .form-check-label::after {
+            left: 22px;
+        }
+        .form-check-input.hgmd-switch-lg:checked + .form-check-label::after {
+            left: 22px;
+        }
+
+        /* Ajouter l'icône au switch */
+        .form-check-input.transcript-switch-lg:not(:checked) + .form-check-label::after {
+            background-image: url('/saveme.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border: none;
+        }
+        #accordion .ui-accordion-header,
+        #accordion .ui-accordion-header.ui-state-active {
+            background-color: #f1f1f1;  /* <- la couleur "inactive" par défaut */
+            color: #000;                /* couleur du texte */
+            font-weight: normal;        /* optionnel, pour éviter le gras actif */
+            border: 1px solid #ccc;
+        }
+        .ui-icon {
+            display: none !important;
+        }
+        .hgmd-md {
+            background-color: red;
+            color: white;
+        }
+        .hgmd-mdq {
+            background-color: yellow;
+        }
+
+        .fixed-width-container {
+            width: 90%; /* Ajustez cette valeur selon vos besoins */
+            margin: 0 auto; /* Centre les conteneurs */
+        }
+    </style>
+</head>
+<body>
+    <div class="container fixed-width-container">
+        <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+            <img src="logo_datalake2.png" alt="Logo" style="height: 64px; width: auto; margin-right: 1rem;">
+            <span class="app-title fs-1">Datalake Explorer</span>
+        </header>
+    </div>
+    <div class="container fixed-width-container">
+        <div class="row mb-3 align-items-end">
+            <b>Settings</b><br>
+            <div class="col-md-3">
+                <label for="datalake" class="form-label">Datalake</label>
+                <select id="datalake" class="form-select">
+                    <option value="" selected disabled>--Select datalake--</option>
+                    <!--<option value="datalake">Datalake_Test</option>
+                    <option value="Datalake_Exome">Datalake_Exome</option>
+                    <option value="Datalake_Neuro">Datalake_Neuro</option>-->
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="analysis" class="form-label">Analysis</label>
+                <select id="analysis" class="form-select">
+                    <option value="wg">Whole Genome</option>
+                    <option value="we">Whole Exome</option>
+                    <option value="interval">Custom Positions</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="structuredInput" class="form-label">Positions (format : chr start end)</label>
+                <textarea class="form-control" id="structuredInput" rows="1" placeholder="chr20   49982980 49988886" disabled></textarea>
+            </div>
+        </div>
+    </div>
+    <div class="container fixed-width-container">
+        <div class="row">
+            <div class="col-md-12">
+                <div id="accordion">
+                    <h3>Datalake Informations</h3>
+                    <div>
+                        <div class="d-flex">
+                            <div class="d-flex flex-column gap-1" style="width: 25%;">
+                                <div><strong>Patients Number:</strong><span id="NbPat" style="margin-left:4px;"></span></div>
+                                <div><strong>Clinvar version:</strong><span id="ClinvarVer" style="margin-left:4px;"></span></div>
+                                <div><strong>HGMD version:</strong><span id="HgmdVer" style="margin-left:4px;"></span></div>
+                                <div><strong>gnomAD version:</strong><span id="gnomADVer" style="margin-left:4px;"></span></div>
+                                <div><strong>SnpEff version:</strong><span id="SnpEffVer" style="margin-left:4px;"></span></div>
+                            </div>
+                            <div class="d-flex flex-column gap-1" style="width: 75%;">
+                                <!-- Autres infos -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div class="container fixed-width-container">
+        <b>Filters</b>
+        <div class="row gx-2 align-items-center flex-wrap">
+            <div class="col-auto border rounded p-2 d-flex flex-column align-items-start" id="filterBadges" style="border-color: #ccc !important;">
+                <div><strong>SnpEff Impact</strong></div>
+                <div class="d-flex flex-wrap gap-2 align-items-center mt-1">
+                    <span class="common-badge-style text-danger bg-danger-subtle border border-danger-subtle active" data-filter="HIGH">
+                        <span class="badge-text">HIGH</span>
+                        <input type="checkbox" class="badge-toggle ms-2" title="Activer/désactiver" checked />
+                    </span>
+                    <span class="common-badge-style text-orange bg-orange-subtle border border-orange-subtle active" data-filter="MODERATE">
+                        <span class="badge-text">MODERATE</span>
+                        <input type="checkbox" class="badge-toggle ms-2" title="Activer/désactiver" checked />
+                    </span>
+                    <span class="common-badge-style text-warning bg-warning-subtle border border-warning-subtle active" data-filter="LOW">
+                        <span class="badge-text">LOW</span>
+                        <input type="checkbox" class="badge-toggle ms-2" title="Activer/désactiver" checked />
+                    </span>
+                    <span class="common-badge-style text-primary bg-primary-subtle border border-primary-subtle active" data-filter="MODIFIER">
+                        <span class="badge-text">MODIFIER</span>
+                        <input type="checkbox" class="badge-toggle ms-2" title="Activer/désactiver" checked />
+                    </span>
+                </div>
+            </div>
+            <div class="col-auto border rounded p-2 d-flex flex-column align-items-start" id="filterGnomAD" style="border-color: #ccc !important;">
+                <div><strong>gnomAD</strong></div>
+                <div class="d-flex flex-wrap gap-2 align-items-center mt-1">
+                    <label for="inputMaxFreq" class="col-auto col-form-label" style="line-height: 1; padding-top: 2px; padding-bottom: 2px; margin-top: 0; margin-bottom: 0;">Max Freq</label>
+                    <div>
+                        <input type="text" class="form-control form-control-sm" id="inputMaxFreq" value="1" style="width: 45px; height: 20px; font-size: 0.75rem; padding: 0 4px;">
+                    </div>
+                    <label for="inputMaxHet" class="col-auto col-form-label" style="height: 28px;">Max HTZ</label>
+                    <div>
+                        <input type="text" class="form-control form-control-sm" id="inputMaxHom" value="99999" style="width: 45px; height: 20px; font-size: 0.75rem; padding: 0 4px;">
+                    </div>
+                    <label for="inputMaxHom" class="col-auto col-form-label" style="height: 28px;">
+                        <span data-bs-toggle="tooltip" data-bs-placement="bottom" title="Max Number of patients carrying Homozygous or Hemizygous variant">
+                        Max HMZ
+                        </span>
+                    </label>
+                    <div>
+                        <input type="text" class="form-control form-control-sm" id="inputMaxHet" value="99999" style="width: 45px; height: 20px; font-size: 0.75rem; padding: 0 4px;">
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto border rounded p-2 d-flex flex-column align-items-start" id="filterTranscript" style="border-color: #ccc !important;">
+                <div><strong>Transcripts</strong></div>
+                <div class="common-badge-style d-flex align-items-center gap-2 px-2 py-1 border border-success-subtle bg-success-subtle text-success mt-1 active">
+                    <span class="mane-label">All</span>
+                    <div class="form-switch">
+                        <input class="form-check-input transcript-switch-lg" type="checkbox" id="switchTranscript" checked>
+                        <label class="form-check-label" for="switchTranscript"></label>
+                    </div>
+                    <span class="mane-label">MANE</span>
+                </div>
+            </div>
+            <div class="col-auto border rounded p-2 d-flex flex-column align-items-start" id="filterHgmd" style="border-color: #ccc !important;">
+                <div><strong>HGMD</strong></div>
+                <div class="common-badge-style d-flex align-items-center gap-2 px-2 py-1 border border-danger-subtle bg-danger-subtle text-danger mt-1 active">
+                    <span class="hgmd-label">All</span>
+                    <div class="form-switch">
+                        <input class="form-check-input hgmd-switch-lg" type="checkbox" id="switchHgmd" checked>
+                        <label class="form-check-label" for="switchHgmd"></label>
+                    </div>
+                    <span class="hgmd-label">DM</span>
+                </div>
+            </div>
+        </div>
+        <br>
+        <div class="col-md-3 d-flex align-items-end">
+            <button id="loadDataButton" class="btn btn-secondary btn-sm" type="button" disabled>Load Data</button>
+        </div>
+    </div>
+    <br>
+    <table id="tableau" class="display">
+        <thead>
+            <tr>
+                <th>Max Impact</th>
+                <th>Chr</th>
+                <th>Pos</th>
+                <th>Ref</th>
+                <th>Alt</th>
+                <th>Effect</th>
+                <th>Gene</th>
+                <th>
+                    <span data-bs-toggle="tooltip" data-bs-placement="top" title="Number of patients carrying the variant">
+                        Recurrence
+                    </span>
+                </th>
+            </tr>
+        </thead>
+    </table>
+
+    <script>
+        let maneTranscripts = [];
+        let jsonExome = [];
+        let globalFilteredData = [];
+        document.addEventListener('DOMContentLoaded', function() {
+            let dataTable;
+
+            // Bootstrap tooltip activation
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            function formatWithLineBreaks(text) {
+                return text ? text.match(/.{1,10}/g).join('\n') : '';
+            }
+            function getImpactPriority(impact) {
+                const priority = { HIGH: 4, MODERATE: 3, LOW: 2, MODIFIER: 1 };
+                return priority[impact] || 0;
+            }
+            //$.fn.dataTable.ext.type.order['impact-pre'] = function (data) {
+            //    const priority = { HIGH: 4, MODERATE: 3, LOW: 2, MODIFIER: 1 };
+            //    return priority[data] || 0;
+            //};
+            const impactOrder = {
+                'HIGH': 1,
+                'MODERATE': 2,
+                'LOW': 3,
+                'MODIFIER': 4
+            };
+
+            $.fn.dataTable.ext.order['impact-pre'] = function (settings, col) {
+                return this.api().column(col, {order:'index'}).nodes().map(function (td, i) {
+                    // Récupère le texte pur sans balises HTML
+                    const text = $(td).text().toUpperCase();
+                    // Retourne la priorité pour trier
+                    return impactOrder[text] || 99; // 99 si inconnu
+                });
+            };
+            async function chargerDonnees() {
+                const loadDataButton = document.getElementById("loadDataButton");
+                loadDataButton.innerHTML = `
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Loading...
+                `;
+                loadDataButton.disabled = true;
+
+                const datalake = document.getElementById("datalake").value;
+                const analysis = document.getElementById("analysis").value;
+                const positions = document.getElementById("structuredInput").value.trim();
+                const isChecked = document.getElementById("switchTranscript").checked;
+
+                const activeFilters = [...badgesContainer.querySelectorAll('.common-badge-style.active')]
+                    .map(b => b.dataset.filter);
+
+                // Valeur par défaut = 100 si vide
+                let maxFreqInput = document.getElementById("inputMaxFreq").value.trim();
+                const maxFreq = maxFreqInput === "" ? 1 : parseFloat(maxFreqInput);
+
+                const chromosomes = [
+                    ["chr1", 248956422], ["chr2", 242193529], ["chr3", 198295559],
+                    ["chr4", 190214555], ["chr5", 181538259], ["chr6", 170805979],
+                    ["chr7", 159345973], ["chr8", 145138636], ["chr9", 138394717],
+                    ["chr10", 133797422], ["chr11", 135086622], ["chr12", 133275309],
+                    ["chr13", 114364328], ["chr14", 107043718], ["chr15", 101991189],
+                    ["chr16", 90338345], ["chr17", 83257441], ["chr18", 80373285],
+                    ["chr19", 58617616], ["chr20", 64444167], ["chr21", 46709983],
+                    ["chr22", 50818468], ["chrX", 156040895], ["chrY", 57227415]
+                ];
+
+                async function fetchChrom(chrom, start, end) {
+                    const url = `http://10.160.192.238:5000/parquet2json?datalake=${encodeURIComponent(datalake)}&chrom=${chrom}&start=${start}&end=${end}`;
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`HTTP ${response.status} for ${chrom}`);
+                    return response.json();
+                }
+
+                try {
+                    let results = [];
+
+                    if (analysis === "wg") {
+                        const promises = chromosomes.map(([chrom, end]) =>
+                            fetchChrom(chrom, 1, end)
+                                .then(data => {
+                                    console.log(`${chrom} récupéré :`, data.length, "variants");
+                                    return data;
+                                })
+                                .catch(err => {
+                                    console.error(`Erreur ${chrom}:`, err);
+                                    return [];
+                                })
+                        );
+                        const allResponses = await Promise.all(promises);
+                        results = allResponses.flat();
+                        results.forEach(r => {
+                            if (isNaN(parseFloat(r.gnomad_AF))) {
+                                r.gnomad_AF = "0";
+                            }
+                        });
+                        const filteredData = results.filter(item =>
+                            (activeFilters.length === 0 || activeFilters.includes(item.snpeff_impact)) &&
+                            (parseFloat(item.gnomad_AF) <= maxFreq)
+                        );
+                        console.log("Nombre total de variants récupérés:", results.length);
+                        console.log("Chromosomes présents dans results:", [...new Set(results.map(r => r.chr))]);
+
+                        console.log("Résultats bruts récupérés:", results.map(r => r.chr));
+                    } else if (analysis === "we") {
+                        const positions = jsonExome.map(posStr => posStr.split('\t'));
+                        const promises = positions.map(([chrom, start, end]) =>
+                            fetchChrom(chrom, start, end).catch(err => {
+                                console.warn(`Position ${chrom} ${start} ${end} skipped:`, err);
+                                return [];
+                            })
+                        );
+                        const allResponses = await Promise.all(promises);
+                        results = allResponses.flat();
+                        results.forEach(r => {
+                            if (isNaN(parseFloat(r.gnomad_AF))) {
+                                r.gnomad_AF = "0";
+                            }
+                        });
+                        const filteredData = results.filter(item =>
+                            (activeFilters.length === 0 || activeFilters.includes(item.snpeff_impact)) &&
+                            (parseFloat(item.gnomad_AF) <= maxFreq)
+                        );
+                    } else if (analysis === "interval") {
+                        const regex = /^(chr[0-9XYMT]+)\s+(\d+)\s+(\d+)$/;
+                        const match = positions.match(regex);
+                        if (!match) return afficherErreur("Invalid format. Use: chr20   49982980 49988886");
+                        const [, chrom, start, end] = match;
+                        results = await fetchChrom(chrom, start, end);
+                        results.forEach(r => {
+                            if (isNaN(parseFloat(r.gnomad_AF))) {
+                                r.gnomad_AF = "0";
+                            }
+                        });
+                    }
+
+                    if (Array.isArray(results) && results.length > 0) {
+                        // Ajout du filtre sur AF gnomAD
+                        const filteredData = results.filter(item =>
+                            (activeFilters.length === 0 || activeFilters.includes(item.snpeff_impact)) &&
+                            (parseFloat(item.gnomad_AF) <= maxFreq)
+                        );
+                        console.log("Après 1er filtre:", filteredData.map(r => r.chr));
+
+                        globalFilteredData = filteredData; // stocker globalement
+                        document.getElementById("tableau").style.display = "table";
+                        appliquerTousFiltres();
+                    } else {
+                        afficherErreur("Data is not in the expected format or is empty.");
+                    }
+                } catch (error) {
+                    afficherErreur("Error fetching data. Check the console.");
+                    console.error(error);
+                } finally {
+                    loadDataButton.innerHTML = `Load Data`;
+                    loadDataButton.disabled = false;
+                }
+            }
+
+
+            function afficherErreur(message) {
+                let errorDiv = document.getElementById("errorMessage");
+                if (!errorDiv) {
+                    errorDiv = document.createElement("div");
+                    errorDiv.id = "errorMessage";
+                    errorDiv.className = "alert alert-danger mt-2";
+                    document.body.prepend(errorDiv);
+                }
+                errorDiv.textContent = message;
+            }
+
+
+            async function loadDatalakeInfo(datalakeName) {
+                try {
+                    const response = await fetch(`http://10.160.192.238:5000/getInfoDatalake?datalake=${encodeURIComponent(datalakeName)}`);
+                    const data = await response.json();
+
+                    const info = data[0];
+
+                    document.getElementById("NbPat").textContent = info.NbPat;
+                    document.getElementById("ClinvarVer").textContent = info.Clinvar_v;
+                    document.getElementById("HgmdVer").textContent = info.hgmd_v;
+                    document.getElementById("gnomADVer").textContent = info.gnomAD_v;
+                    document.getElementById("SnpEffVer").textContent = info.SnpEff_v;
+                } catch (error) {
+                    console.error("Erreur lors de la récupération des informations du datalake :", error);
+                    document.getElementById("NbPat").textContent = "Erreur";
+                    document.getElementById("ClinvarVer").textContent = "Erreur";
+                    document.getElementById("HgmdVer").textContent = "Erreur";
+                    document.getElementById("gnomADVer").textContent = "Erreur";
+                    document.getElementById("SnpEffVer").textContent = "Erreur";
+                }
+            }
+
+            function formatDetails(details, rowId) {
+                const tableId = `detailsTable-${rowId}`;
+                const filterOn = document.getElementById('switchTranscript').checked;
+                let filteredDetails = details;
+
+                if (filterOn) {
+                    filteredDetails = details.filter(item =>
+                        maneTranscripts.includes(item.snpeff_feature_id.replace(/\.\d+$/, ''))
+                    );
+                }
+
+                let detailsHtml = `<table id="${tableId}" class="details-table display table-sm" style="width:100%">`;
+                detailsHtml += '<thead class="thead-light"><tr>';
+
+                const keysToShow = [
+                    "impact_effect",  
+                    "snpeff_gene", "snpeff_geneid",
+                    "snpeff_feature", "snpeff_feature_id", "snpeff_bio_type", "snpeff_rank",
+                    "hgvs_c_p",
+                    "snpeff_cdna_pos", "snpeff_cdna_len",
+                    "snpeff_cds_pos", "snpeff_cds_len", "snpeff_aa_pos", 
+                    "gnomad_AF", "gnomad_AC", "gnomad_AN", "gnomad_het", "gnomad_homhem", 
+                    "clinvar_CLNSIG", "clinvar_CLNSIGCONF", "hgmd_CLASS",
+                    "sample", "gt", "ad", "dp", "gq",
+                ];
+
+                detailsHtml += keysToShow.map(key => {
+                    if (key === "impact_effect") return `<th>Impact / Effect</th>`;
+                    if (key === "hgvs_c_p") return `<th>HGVS</th>`;
+                    return `<th>${key}</th>`;
+                }).join('');
+                detailsHtml += '</tr></thead><tbody>';
+
+                if (filteredDetails.length === 0) {
+                    detailsHtml += `<tr><td colspan="${keysToShow.length}" class="text-center text-muted">No MANE transcripts found.</td></tr>`;
+                } else {
+                    filteredDetails.forEach(item => {
+                        detailsHtml += '<tr>';
+                        keysToShow.forEach(key => {
+                            let value = '';
+                            if (key === "impact_effect") {
+                                const impact = item.snpeff_impact || '';
+                                const effect = item.snpeff_effect || '';
+                                let colorClass = '';
+                                switch (impact) {
+                                    case 'HIGH': colorClass = 'text-danger'; break;
+                                    case 'MODERATE': colorClass = 'text-orange'; break;
+                                    case 'LOW': colorClass = 'text-warning'; break;
+                                    case 'MODIFIER': colorClass = 'text-primary'; break;
+                                }
+                                value = `<span class="${colorClass}">${impact}</span><br><b>${effect}</b>`;
+                            } else if (key === "hgvs_c_p") {
+                                const hgvsC = item.snpeff_hgvs_c || '';
+                                const hgvsP = item.snpeff_hgvs_p || '';
+                                value = hgvsC + '<br>' + hgvsP;
+                            } else {
+                                value = item[key] || '';
+                                if (key === "snpeff_gene" && value) {
+                                    value = `<a href="https://www.genecards.org/cgi-bin/carddisp.pl?gene=${value}" target="_blank">${value}</a>`;
+                                } else if (key === "gt") {
+                                    if (value === 1) value = "0/1";
+                                    else if (value === 2) value = "1/1";
+                                }
+                            }
+                            let tdClass = '';
+                            if (key === "hgmd_CLASS") {
+                                if (value === "DM") tdClass = 'hgmd-md';
+                                else if (value === "DM?") tdClass = 'hgmd-mdq';
+                            }
+                            detailsHtml += `<td class="${tdClass}">${value}</td>`;
+                        });
+                        detailsHtml += '</tr>';
+                    });
+                }
+                detailsHtml += '</tbody></table>';
+                return detailsHtml;
+            }
+
+            $.fn.dataTable.ext.order['impact-pre'] = function(settings, col) {
+                const impactOrder = { HIGH: 1, MODERATE: 2, LOW: 3, MODIFIER: 4 };
+                return this.api().column(col, {order:'index'}).nodes().map(function(td) {
+                    return impactOrder[$(td).text().toUpperCase()] || 99;
+                });
+            };
+
+            function afficherTableau(donnees, filterHgmd = false) {
+                const groupedData = donnees.reduce((acc, item) => {
+                    if (!acc[item.id]) acc[item.id] = [];
+                    acc[item.id].push(item);
+                    return acc;
+                }, {});
+
+                let mainData = Object.keys(groupedData).map(id => {
+                    const items = groupedData[id];
+                    const uniqueSamples = [...new Set(items.map(i => i.sample))];
+
+                    const maxImpact = items
+                        .flatMap(i => i.snpeff_impact.split(';'))
+                        .reduce((max, impact) =>
+                            getImpactPriority(impact) > getImpactPriority(max) ? impact : max
+                        , 'MODIFIER');
+
+                    return {
+                        max_impact: maxImpact, // affichage correct
+                        chr: items[0].chr,
+                        pos: items[0].pos,
+                        ref: formatWithLineBreaks(items[0].ref),
+                        alt: formatWithLineBreaks(items[0].alt),
+                        effect: [...new Set(items.map(i => i.snpeff_effect))].join('; '),
+                        gene: [...new Set(items.map(i => i.snpeff_gene))].join('; '),
+                        recurrence: uniqueSamples.length,
+                        details: items
+                    };
+                });
+
+
+                if (filterHgmd) {
+                    mainData = mainData.filter(item =>
+                        item.details.some(d => d.hgmd_CLASS === "DM")
+                    );
+                }
+
+                if ($.fn.DataTable.isDataTable('#tableau')) {
+                    dataTable.clear().rows.add(mainData).draw();
+                } else {
+                    dataTable = $('#tableau').DataTable({
+                        columns: [
+                            {
+                                data: "max_impact",
+                                orderDataType: 'impact-pre',
+                                render: function(data) {
+                                    if (!data) return '';
+                                    let colorClass = '';
+                                    switch (data.toUpperCase()) {
+                                        case 'HIGH':
+                                            colorClass = 'text-danger';
+                                            break;
+                                        case 'MODERATE':
+                                            colorClass = 'text-orange';
+                                            break;
+                                        case 'LOW':
+                                            colorClass = 'text-warning';
+                                            break;
+                                        case 'MODIFIER':
+                                            colorClass = 'text-primary';
+                                            break;
+                                        default:
+                                            colorClass = '';
+                                    }
+                                    return `<span class="${colorClass}">${data}</span>`;
+                                }
+                            },
+                            { data: "chr" },
+                            { data: "pos" },
+                            { data: "ref" },
+                            { data: "alt" },
+                            {
+                                data: "effect",
+                                render: function (data) {
+                                    if (!data) return '';
+                                    let clean = data.replace(/;\s*[\r\n]*/g, ';');
+                                    clean = clean.replace(/;/g, ';<br>');
+                                    return clean.replace(/<br>$/, '');
+                                }
+                            },
+                            {
+                                data: "gene",
+                                render: function (data) {
+                                    if (!data) return '';
+                                    let clean = data.replace(/;\s*[\r\n]*/g, ';');
+                                    clean = clean.replace(/;/g, ';<br>');
+                                    return clean.replace(/<br>$/, '');
+                                }
+                            },
+                            {
+                                data: "recurrence",
+                                render: function (data) {
+                                    const nbPat = parseInt(document.getElementById("NbPat").textContent) || 0;
+                                    if (nbPat > 0) {
+                                        const percent = ((data / nbPat) * 100).toFixed(1);
+                                        return `${data} (${percent}%)`;
+                                    }
+                                    return data;
+                                }
+                            }
+                        ],
+                        data: mainData,
+                        pageLength: 50,
+                        scrollX: false,
+                        dom: '<"top d-flex align-items-center justify-content-start gap-3"l i>rt<"bottom"p><"clear">'
+                    });
+
+
+                    $('#tableau tbody').on('click', 'td', function () {
+                        const tr = $(this).closest('tr');
+                        const row = dataTable.row(tr);
+                        const rowData = row.data();
+
+                        if (!rowData) {
+                            console.warn("Données manquantes pour cette ligne");
+                            return;
+                        }
+
+                        if (row.child.isShown()) {
+                            row.child.hide();
+                            tr.removeClass('shown');
+                        } else {
+                            const rowId = `${rowData.chr}_${rowData.pos}`;
+                            row.child(formatDetails(rowData.details, rowId)).show();
+                            tr.addClass('shown');
+
+                            // Initialiser DataTable sur le tableau secondaire
+                            $(`#detailsTable-${rowId}`).DataTable({
+                                paging: false,
+                                searching: false,
+                                info: false,
+                                order: [[0, 'asc']],
+                                columnDefs: [
+                                    { targets: 0, orderDataType: 'impact-pre' }
+                                ]
+                            });
+                        }
+                    });
+
+                }
+            }
+
+
+            $('#loadDataButton').on('click', chargerDonnees);
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    chargerDonnees();
+                }
+            });
+
+            const badgesContainer = document.getElementById('filterBadges');
+            badgesContainer.addEventListener('click', (e) => {
+                const badge = e.target.closest('.common-badge-style');
+                if (!badge) return;
+
+                const checkbox = badge.querySelector('.badge-toggle');
+
+                // Si clic sur la checkbox → multi-sélection
+                if (e.target.classList.contains('badge-toggle')) {
+                    e.stopPropagation();
+                    if (checkbox.checked) {
+                        badge.classList.add('active');
+                    } else {
+                        badge.classList.remove('active');
+                    }
+                }
+                // Si clic sur le texte → sélection exclusive
+                else if (e.target.classList.contains('badge-text')) {
+                    // Désactiver tous les autres badges
+                    badgesContainer.querySelectorAll('.common-badge-style').forEach(b => {
+                        b.classList.remove('active');
+                        b.querySelector('.badge-toggle').checked = false;
+                    });
+
+                    // Activer le badge cliqué
+                    badge.classList.add('active');
+                    checkbox.checked = true;
+                }
+            });
+
+            function updateFilter() {
+                const activeFilters = [...badgesContainer.querySelectorAll('.common-badge-style.active')].map(b => b.dataset.filter);
+                console.log('Filtres actifs:', activeFilters);
+            }
+            function appliquerTousFiltres() {
+                if (!globalFilteredData || globalFilteredData.length === 0) {
+                    console.warn("Aucune donnée à filtrer pour afficher le tableau.");
+                    return;
+                }
+                const maxFreq = parseFloat(document.getElementById("inputMaxFreq").value.trim()) || 1;
+                const maxHtz  = parseInt(document.getElementById("inputMaxHet").value.trim(), 10);
+                const maxHmz  = parseInt(document.getElementById("inputMaxHom").value.trim(), 10);
+                const filterHgmd = document.getElementById("switchHgmd").checked;
+
+                const maxHetLimit = isNaN(maxHtz) ? Infinity : maxHtz;
+                const maxHomLimit = isNaN(maxHmz) ? Infinity : maxHmz;
+
+                const dataFiltree = globalFilteredData.filter(d => {
+                    const freq = parseFloat(d.gnomad_AF) || 0;
+
+                    let htz = 0;
+                    if (Array.isArray(d.gnomad_het)) {
+                        htz = parseFloat(d.gnomad_het[0]) || 0;
+                    } else {
+                        htz = parseFloat(d.gnomad_het) || 0;
+                    }
+
+                    let hmz = 0;
+                    if (Array.isArray(d.gnomad_homhem)) {
+                        hmz = parseFloat(d.gnomad_homhem[0]) || 0;
+                    } else {
+                        hmz = parseFloat(d.gnomad_homhem) || 0;
+                    }
+
+                    const passFreq = freq <= maxFreq;
+                    const passHet  = htz  <= maxHetLimit;
+                    const passHom  = hmz  <= maxHomLimit;
+                    const passHgmd = !filterHgmd || d.hgmd_CLASS === "DM";
+
+                    return passFreq && passHet && passHom && passHgmd;
+                });
+                console.log("Données finales pour DataTable:", dataFiltree.map(d => d.chr));
+                afficherTableau(dataFiltree, filterHgmd);
+            }
+
+
+
+            document.getElementById('datalake').addEventListener('change', function () {
+                const selectedDatalake = this.value;
+                const loadDataButton = document.getElementById("loadDataButton");
+
+                if (selectedDatalake) {
+                    loadDataButton.disabled = false;
+                    loadDatalakeInfo(selectedDatalake);
+                } else {
+                    loadDataButton.disabled = true;
+                }
+            });
+            document.getElementById("switchTranscript").addEventListener("change", () => {
+            });
+            $(function () {
+                $("#accordion").accordion({
+                    collapsible: true,
+                    active: 0,
+                    heightStyle: "content",
+                    activate: function (event, ui) {
+                        if (ui.newPanel.length === 0) {
+                            console.log("➤ Accordéon fermé");
+                        } else {
+                            console.log("➤ Accordéon ouvert");
+                        }
+                    }
+                });
+            });
+            (async () => {
+                try {
+                    const response = await fetch('http://10.160.192.238:5000/listDatalakes');
+                    const data = await response.json();
+                    const listDatalakes = data.ListDatalake || [];
+                    function makeListOptions(listDatalakes) {
+                        const select = document.getElementById("datalake");
+                        listDatalakes.forEach(datalake => {
+                            const option = document.createElement("option");
+                            option.value = datalake;
+                            option.textContent = datalake;
+                            select.appendChild(option);
+                        });
+                    }
+                    makeListOptions(listDatalakes);
+                } catch (error) {
+                    console.error("Erreur lors du chargement de la liste des datalakes :", error);
+                }
+            })();
+
+            (async () => {
+                try {
+                    const response = await fetch('http://10.160.192.238:5000/getMane');
+                    const data = await response.json();
+                    maneTranscripts = data.transcripts || [];
+
+                    // Appelle une fonction si besoin, par exemple pour recharger ou filtrer la table
+                    
+                } catch (error) {
+                    console.error("Erreur lors du chargement des transcripts MANE :", error);
+                }
+            })();
+
+            document.getElementById("switchTranscript").addEventListener("change", () => {
+                $('#tableau tbody tr.shown').each(function () {
+                    const row = dataTable.row(this);
+                    row.child(formatDetails(row.data().details)).show(); // Recharge le sous-tableau avec filtre MANE
+                });
+            });
+            
+            document.getElementById("switchHgmd").addEventListener("change", appliquerTousFiltres);
+            document.getElementById("inputMaxFreq").addEventListener("change", appliquerTousFiltres);
+            document.getElementById("inputMaxHet").addEventListener("change", appliquerTousFiltres);
+            document.getElementById("inputMaxHom").addEventListener("change", appliquerTousFiltres);
+
+            document.getElementById('analysis').addEventListener('change', async function () {
+                const selectedAnalysis = this.value;
+                const positionInput = document.getElementById("structuredInput");
+                if (selectedAnalysis === "interval") {
+                    positionInput.disabled = false;
+                } else {
+                    positionInput.disabled = true;
+                }
+                if (selectedAnalysis === "we") {
+                    try {
+                        const response = await fetch('http://10.160.192.238:5000/getExomeBed');
+                        const data = await response.json();
+                        jsonExome = data.exome_pos || [];
+                        console.log("Données exome chargées :", jsonExome);
+                    } catch (error) {
+                        console.error("Erreur lors du chargement du bed exome :", error);
+                    }
+                } else {
+                    jsonExome = null;
+                    console.log("Données exome suppr :", jsonExome);
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>

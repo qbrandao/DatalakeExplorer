@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test HTML avec DataTables</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Exemple de données
+            const exampleData = [
+                {
+                    "chr": "chr1",
+                    "pos": 12345,
+                    "ref": "A",
+                    "alt": "T",
+                    "snpeff_effect": "missense_variant",
+                    "snpeff_impact": "MODERATE",
+                    "snpeff_gene": "GeneName",
+                    "snpeff_geneid": "ENSG00000123456",
+                    "snpeff_feature": "FeatureName",
+                    "snpeff_feature_id": "ENST00000123456",
+                    "snpeff_bio_type": "protein_coding",
+                    "snpeff_rank": "1",
+                    "snpeff_hgvs_c": "c.123A>T",
+                    "snpeff_hgvs_p": "p.Leu45Phe",
+                    "snpeff_cdna_pos": "123",
+                    "snpeff_cdna_len": "1000",
+                    "snpeff_cds_pos": "123",
+                    "snpeff_cds_len": "1000",
+                    "snpeff_aa_pos": "45"
+                }
+            ];
+
+            // Initialiser DataTables
+            const table = $('#tableau').DataTable({
+                data: exampleData,
+                columns: [
+                    { title: "Chr", data: "chr" },
+                    { title: "Pos", data: "pos" },
+                    { title: "Ref", data: "ref" },
+                    { title: "Alt", data: "alt" },
+                    { title: "SnpEff Effect", data: "snpeff_effect" },
+                    { title: "SnpEff Impact", data: "snpeff_impact" },
+                    { title: "Gene", data: "snpeff_gene" },
+                    { title: "ENSG", data: "snpeff_geneid" },
+                    { title: "Feature", data: "snpeff_feature" },
+                    { title: "ENST", data: "snpeff_feature_id" },
+                    { title: "Bio Type", data: "snpeff_bio_type" },
+                    { title: "SnpEff Rank", data: "snpeff_rank" },
+                    { title: "HGVS c.", data: "snpeff_hgvs_c" },
+                    { title: "HGVS p.", data: "snpeff_hgvs_p" },
+                    { title: "cDNA Pos", data: "snpeff_cdna_pos" },
+                    { title: "cDNA Len", data: "snpeff_cdna_len" },
+                    { title: "CDS Pos", data: "snpeff_cds_pos" },
+                    { title: "CDS Len", data: "snpeff_cds_len" },
+                    { title: "AA pos", data: "snpeff_aa_pos" }
+                ]
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Chargement des données Parquet</h1>
+    <table id="tableau" class="display"></table>
+</body>
+</html>
